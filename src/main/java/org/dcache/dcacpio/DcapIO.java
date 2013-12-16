@@ -35,10 +35,18 @@ public class DcapIO {
         _channel.close();
     }
 
-    public synchronized void open(String path, String mode) throws IOException {
-        String open = String.format(OPEN, nextSequence(), _uri, path, mode);
+    public synchronized DcapChannel open(String path, String mode) throws IOException {
+        int session = nextSequence();
+        String open = String.format(OPEN, session, _uri, path, mode);
         sendControlMessage(open);
-        getControlMessage();
+        String message = getControlMessage();
+
+        String[] replys = message.split(" ");
+        String host = replys[4];
+        int port = Integer.parseInt(replys[5]);
+        byte[] challange = replys[6].getBytes(Charsets.US_ASCII);
+
+        return new DcapChannelImpl(host, port, session, challange);
     }
 
     private void sayHello() throws IOException {
@@ -78,14 +86,26 @@ public class DcapIO {
                 done = true;
             }
         }
-        System.out.println(sb);
+
+        // remove trailing \n\r
+
+        while(sb.charAt(sb.length() - 1) == '\n' || sb.charAt(sb.length() - 1) == '\r') {
+            sb.deleteCharAt(sb.length() - 1);
+        }
         return sb.toString();
     }
 
     public static void main(String[] args) throws IOException {
         DcapIO dcap = new DcapIO("dcache-lab000:22125");
         dcap.connect();
-        dcap.open("/exports/data/p34u", "r");
+        try(DcapChannel dcapChannel = dcap.open("/exports/data/p34", "r")) {
+            ByteBuffer in = ByteBuffer.allocate(8192);
+
+            // get full data
+            while(dcapChannel.read(in, in.position()) > 0) ;
+            in.flip();
+            System.out.println( new String(in.array(), 0, in.remaining(), Charsets.US_ASCII));
+        }
         dcap.disconnect();        
     }
 

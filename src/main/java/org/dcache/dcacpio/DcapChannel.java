@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 /**
  *
  */
-public interface DcapChannel {
+public interface DcapChannel extends AutoCloseable {
 
     /**
      * Reads a sequence of bytes from this channel into the given buffer,
@@ -32,4 +32,11 @@ public interface DcapChannel {
      * @throws IOException
      */
     public int write(ByteBuffer src, long position) throws IOException;
+
+    /**
+     * Close dcap data connection.
+     * @throws IOException
+     */
+    @Override
+    public void close() throws IOException;
 }
