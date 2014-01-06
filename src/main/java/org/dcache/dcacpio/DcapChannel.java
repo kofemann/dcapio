@@ -1,12 +1,13 @@
 package org.dcache.dcacpio;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
  *
  */
-public interface DcapChannel extends AutoCloseable {
+public interface DcapChannel extends Closeable {
 
     /**
      * Reads a sequence of bytes from this channel into the given buffer,
@@ -33,10 +34,4 @@ public interface DcapChannel extends AutoCloseable {
      */
     public int write(ByteBuffer src, long position) throws IOException;
 
-    /**
-     * Close dcap data connection.
-     * @throws IOException
-     */
-    @Override
-    public void close() throws IOException;
 }
