@@ -1,5 +1,6 @@
 package org.dcache.dcacpio;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -66,25 +67,26 @@ public class DcapChannelImpl implements DcapChannel {
         dataBlock.order(ByteOrder.BIG_ENDIAN);
 
         dataBlock.limit(8);
-        _channel.read(dataBlock);
+        readFully(_channel, dataBlock);
         int total = 0;
         while (true) {
             dataBlock.clear();
             dataBlock.limit(4);
-            _channel.read(dataBlock);
+            readFully(_channel, dataBlock);
             dataBlock.flip();
             int n = dataBlock.getInt();
             if (n < 0) {
+                getAck();
                 break;
             }
 
             ByteBuffer chunk = buf.slice();
+            System.out.println(n);
             chunk.limit(n);
-            _channel.read(chunk);
+            readFully(_channel, chunk);
             buf.position(buf.position() + n);
             total += n;
         }
-        getAck();
         return total;
     }
 
@@ -92,17 +94,25 @@ public class DcapChannelImpl implements DcapChannel {
         ByteBuffer ackBuffer = ByteBuffer.allocate(256);
         ackBuffer.order(ByteOrder.BIG_ENDIAN);
         ackBuffer.limit(4);
-        _channel.read(ackBuffer);
+        readFully(_channel, ackBuffer);
         ackBuffer.flip();
         int len = ackBuffer.getInt();
         ackBuffer.clear().limit(len);
-        _channel.read(ackBuffer);
+        readFully(_channel, ackBuffer);
         // FIXME: error handling
     }
 
     private static void writeFully(SocketChannel channel, ByteBuffer buf) throws IOException {
         while (buf.hasRemaining()) {
             channel.write(buf);
+        }
+    }
+
+    private static void readFully(SocketChannel channel, ByteBuffer buf) throws IOException {
+        while (buf.hasRemaining()) {
+            if (channel.read(buf) < 0) {
+                throw new EOFException("EOF on input socket (fillBuffer)");
+            }
         }
     }
 
