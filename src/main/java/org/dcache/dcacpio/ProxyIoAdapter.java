@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 /**
  *
  */
-public interface DcapChannel extends Closeable {
+public interface ProxyIoAdapter extends Closeable {
 
     /**
      * Reads a sequence of bytes from this channel into the given buffer,
@@ -20,7 +20,7 @@ public interface DcapChannel extends Closeable {
      * position is greater than or equal to the file's current size
      * @throws IOException
      */
-    public int read(ByteBuffer dst, long position) throws IOException;
+    int read(ByteBuffer dst, long position) throws IOException;
 
     /**
      * Writes a sequence of bytes to this channel from the given buffer,
@@ -32,6 +32,13 @@ public interface DcapChannel extends Closeable {
      * @return The number of bytes written, possibly zero
      * @throws IOException
      */
-    public int write(ByteBuffer src, long position) throws IOException;
+    int write(ByteBuffer src, long position) throws IOException;
 
+    /**
+     * Returns the size of the file access by this adapter.
+     * @return size of the files,  measured in bytes
+     */
+    long size();
+
+    int getSessionId();
 }

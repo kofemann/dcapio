@@ -35,7 +35,7 @@ public class DcapIO {
         _channel.close();
     }
 
-    public synchronized DcapChannel open(String path, String mode) throws IOException {
+    public synchronized ProxyIoAdapter open(String path, String mode) throws IOException {
         int session = nextSequence();
         String open = String.format(OPEN, session, _uri, path, mode);
         sendControlMessage(open);
@@ -46,7 +46,7 @@ public class DcapIO {
         int port = Integer.parseInt(replys[5]);
         byte[] challange = replys[6].getBytes(Charsets.US_ASCII);
 
-        return new DcapChannelImpl(host, port, session, challange);
+        return new DcapChannelImpl(new InetSocketAddress(host, port), session, challange, 0);
     }
 
     private void sayHello() throws IOException {
@@ -98,7 +98,7 @@ public class DcapIO {
     public static void main(String[] args) throws IOException {
         DcapIO dcap = new DcapIO("dcache-lab000:22125");
         dcap.connect();
-        try(DcapChannel dcapChannel = dcap.open("/exports/data/p34", "r")) {
+        try(ProxyIoAdapter dcapChannel = dcap.open("/exports/data/p34", "r")) {
             ByteBuffer in = ByteBuffer.allocate(8192);
 
             // get full data
@@ -106,7 +106,7 @@ public class DcapIO {
             in.flip();
             System.out.println( new String(in.array(), 0, in.remaining(), Charsets.US_ASCII));
         }
-        dcap.disconnect();        
+        dcap.disconnect();
     }
 
 }
